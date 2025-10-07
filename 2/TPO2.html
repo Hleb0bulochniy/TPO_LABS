@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ru">
+<body>
+  <div class="app">
+    <h1>TO DO LIST</h1>
+
+    <form class="row" id="addForm">
+      <input id="newText" type="text" placeholder="Новая задача" />
+      <button id="addBtn" type="submit">Add</button>
+    </form>
+
+    <div class="toolbar">
+      <div class="filters">
+        <button data-filter="all" class="active">All</button>
+        <button data-filter="active">Active</button>
+        <button data-filter="done">Done</button>
+      </div>
+      <button id="clearCompleted">Clear completed</button>
+      <span class="counter" id="counter">0 items</span>
+    </div>
+
+    <ul id="list"></ul>
+  </div>
+
+  <script>
+    const list = document.getElementById('list');
+    const addForm = document.getElementById('addForm');
+    const newText = document.getElementById('newText');
+    const counter = document.getElementById('counter');
+    const clearCompletedBtn = document.getElementById('clearCompleted');
+    const filters = document.querySelector('.filters');
+
+    let currentFilter = 'all';
+
+    const LS_KEY = 'todos';
+    function load() {
+      try {
+        const raw = localStorage.getItem(LS_KEY);
+        if (!raw) return;
+        const arr = JSON.parse(raw);
+        arr.forEach(t => addItem(t.title, t.done));
+      } catch (e) {}
+    }
+    function save() {
+      const data = Array.from(list.children).map(li => ({
+        title: li.querySelector('.title').textContent,
+        done: li.classList.contains('done')
+      }));
+      localStorage.setItem(LS_KEY, JSON.stringify(data));
+    }
+
+    function updateCount() {
+      const total = list.children.length;
+      // БАГ: +1 лишнее
+      counter.textContent = (total + 1) + ' items';
+    }
+
+    function applyFilter() {
+      const items = list.children;
+      for (let li of items) {
+        const isDone = li.classList.contains('done');
+        // БАГ: логика фильтров перепутана
+        if (currentFilter === 'active') {
+          li.style.display = isDone ? '' : 'none';
+        } else if (currentFilter === 'done') {
+          li.style.display = isDone ? 'none' : '';
+        } else {
+          li.style.display = '';
+        }
+      }
+    }
+
+    function addItem(title, done = false) {
+      const li = document.createElement('li');
+      // БАГ: одинаковый id у всех элементов
+      li.id = 'item';
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = !!done;
+
+      const span = document.createElement('span');
+      span.className = 'title';
+      // БАГ: разрешаются пустые названия
+      span.textContent = (title !== undefined) ? title : newText.value;
+
+      const del = document.createElement('button');
+      del.className = 'delBtn';
+      del.textContent = 'Del';
+
+      li.appendChild(cb);
+      li.appendChild(span);
+      li.appendChild(del);
+      if (cb.checked) li.classList.add('done');
+
+      list.appendChild(li);
+      updateCount();
+      save();
+    }
+
+
+    addForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      addItem(newText.value, false); // БАГ: пустые допускаются
+      newText.value = '';
+    });
+
+    list.addEventListener('click', (e) => {
+      const li = e.target.closest('li');
+      if (!li) return;
+
+      if (e.target.matches('input[type="checkbox"]')) {
+        li.classList.toggle('done', e.target.checked);
+        updateCount();
+        save();
+        return;
+      }
+
+      if (e.target.classList.contains('delBtn')) {
+        li.remove();
+        updateCount();
+        save();
+      }
+    });
+
+    filters.addEventListener('click', (e) => {
+      if (!e.target.matches('button[data-filter]')) return;
+      document.querySelectorAll('.filters button').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      currentFilter = e.target.dataset.filter;
+      applyFilter();
+    });
+
+    clearCompletedBtn.addEventListener('click', () => {
+      // БАГ: селектор слишком широкий — удаляем все элементы списка
+      document.querySelectorAll('#list li').forEach(li => li.remove());
+      updateCount();
+      save();
+    });
+
+    load();
+    updateCount();
+    applyFilter();
+  </script>
+</body>
+</html>
