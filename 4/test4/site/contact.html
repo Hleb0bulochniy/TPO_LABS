@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Тестовая форма</title>
+</head>
+<body>
+  <h1>Контактная форма</h1>
+  <form id="form" novalidate>
+    <label for="name">Имя (обязательное)</label>
+    <input id="name" name="name" type="text" required>
+
+    <label for="msg">Сообщение (обязательное)</label>
+    <textarea id="msg" name="msg" rows="4" required></textarea>
+
+    <button id="send" type="submit">Отправить</button>
+  </form>
+
+  <div id="ok"></div>
+  <div id="error"></div>
+
+  <script>
+    const form = document.getElementById('form');
+    const ok = document.getElementById('ok');
+    const err = document.getElementById('error');
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      ok.textContent = '';
+      err.textContent = '';
+
+      const name = document.getElementById('name').value.trim();
+      const msg = document.getElementById('msg').value.trim();
+
+      if (!name || !msg) {
+        err.textContent = 'Error';
+        return;
+      }
+
+      ok.textContent = 'Received!';
+    });
+  </script>
+</body>
+</html>
